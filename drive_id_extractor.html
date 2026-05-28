@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחלץ מזהה (ID) מגוגל דרייב</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 550px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #1a73e8;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #5f6368;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dadce0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+        button {
+            width: 100%;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        .result-container {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            display: none;
+        }
+        .result-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #3c4043;
+        }
+        .result-box {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        .id-text {
+            flex-grow: 1;
+            font-family: monospace;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            direction: ltr;
+            text-align: left;
+        }
+        .copy-btn {
+            background-color: #f1f3f4;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+        .copy-btn:hover {
+            background-color: #e8eaed;
+        }
+        .error-message {
+            color: #d93025;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>מחלץ ID מגוגל דרייב</h2>
+    
+    <div class="form-group">
+        <label for="urlInput">הדבק כאן את כתובת ה-URL (קובץ או תיקייה):</label>
+        <input type="text" id="urlInput" placeholder="https://drive.google.com/..." autocomplete="off">
+        <div id="errorMsg" class="error-message">כתובת URL לא תקינה של גוגל דרייב</div>
+    </div>
+    
+    <button onclick="extractID()">חלץ מזהה</button>
+    
+    <div id="resultContainer" class="result-container">
+        <div class="result-header">המזהה (ID) שחולץ:</div>
+        <div class="result-box">
+            <span id="idOutput" class="id-text"></span>
+            <button id="copyBtn" class="copy-btn" onclick="copyToClipboard()">העתק</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function extractID() {
+    const urlInput = document.getElementById('urlInput').value.trim();
+    const errorMsg = document.getElementById('errorMsg');
+    const resultContainer = document.getElementById('resultContainer');
+    const idOutput = document.getElementById('idOutput');
+    const copyBtn = document.getElementById('copyBtn');
+    
+    errorMsg.style.display = 'none';
+    resultContainer.style.display = 'none';
+    copyBtn.innerText = 'העתק';
+    
+    if (!urlInput) return;
+    
+    // Regular expression to match various Google Drive URL formats (files, folders, view, edit, open?id=)
+    const regexList = [
+        /\/folders\/([a-zA-Z0-0\-_]{25,50})/,
+        /\/file\/d\/([a-zA-Z0-0\-_]{25,50})/,
+        /id=([a-zA-Z0-0\-_]{25,50})/
+    ];
+    
+    let extractedId = null;
+    
+    for (let regex of regexList) {
+        const match = urlInput.match(regex);
+        if (match && match[1]) {
+            extractedId = match[1];
+            break;
+        }
+    }
+    
+    if (extractedId) {
+        idOutput.innerText = extractedId;
+        resultContainer.style.display = 'block';
+    } else {
+        errorMsg.style.display = 'block';
+    }
+}
+
+function copyToClipboard() {
+    const idText = document.getElementById('idOutput').innerText;
+    const copyBtn = document.getElementById('copyBtn');
+    
+    navigator.clipboard.writeText(idText).then(() => {
+        copyBtn.innerText = 'הועתק!';
+        setTimeout(() => {
+            copyBtn.innerText = 'העתק';
+        }, 2000);
+    }).catch(err => {
+        console.error('שגיאה בהעתקה: ', err);
+    });
+}
+</script>
+
+</body>
+</html>
+
+<!-- Injection By NetFree -->
+<script src="//netfree.link/injection-script/go-payment.js" type="text/javascript" async ></script>
+<script src="//netfree.link/injection-script/popup-card-init.js" type="text/javascript" async ></script>
